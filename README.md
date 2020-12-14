@@ -1,12 +1,23 @@
 # NLP-Word_Embedding-LSTM-PCA-TSNE
 
+This project is about text classification ie: given a text, we would want to predict its class (tech, business, sport, entertainment or politics).
+
+My github repository for this project is [here](https://github.com/Alpharouk/NLP-Word_Embedding-LSTM-PCA-TSNE)
+
+![png](/images/nlp_project_files/text_process_prediction.png)
+
 We will be using "BBC-news" dataset ( available in Kaggle ) to do following steps:
 
  - Pre-process the dataset
- - Build models to classify sentences into 5 categories ( tech, business, sport, entertainment, politics )
+ - Build 3 types of model to classify sentences into 5 categories ( tech, business, sport, entertainment, politics )
  - Compare models performance
  - Visualisation of the word embedding in 2D using PCA
  - Visualisation of the word embedding in 3D using T-SNE
+
+
+ 
+# Downloading Dataset
+
  
 ```
 !wget --no-check-certificate \
@@ -25,11 +36,13 @@ padding_type='post'
 oov_tok = "<OOV>"
 training_portion = .8
 ```
+
 Below is the list of the stopwords that dont influence on the meaning of the sentences.
 
 ```
 stopwords = [ "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "could", "did", "do", "does", "doing", "down", "during", "each", "few", "for", "from", "further", "had", "has", "have", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "it", "it's", "its", "itself", "let's", "me", "more", "most", "my", "myself", "nor", "of", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "she", "she'd", "she'll", "she's", "should", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "we'd", "we'll", "we're", "we've", "were", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "would", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves" ]
 ```
+
 # Reading the dataset and removing the stopwords 
 
 After this lines of codes, sentences and labels is 2 lists that contain 2225 values each.
@@ -48,6 +61,7 @@ with open("/tmp/bbc-text.csv", 'r') as csvfile:
             sentence = sentence.replace(token, " ")
         sentences.append(sentence)
 ```
+
 # Pre-processing of data
 
 We will start by splitting it into training and validation parts using the ratio "training_portion = 0.8"
@@ -61,6 +75,7 @@ train_labels = labels[:train_size]
 validation_sentences = sentences[train_size:]
 validation_labels = labels[train_size:]
 ```
+
 The code below is for tokenization and padding of each sentences into a tokenized array with length 120.
 
 ```
@@ -80,6 +95,7 @@ validation_padded = pad_sequences(validation_sequences, padding=padding_type, ma
 ```
 
 We will also tokenize labels into 6 classes ( tech, business, sport, entertainment, politics, OOV ), the additional class is for out of vocabulary.
+
 ```
 label_tokenizer = Tokenizer()
 label_tokenizer.fit_on_texts(labels)
@@ -89,9 +105,12 @@ training_label_seq = np.array(label_tokenizer.texts_to_sequences(train_labels))
 validation_label_seq = np.array(label_tokenizer.texts_to_sequences(validation_labels))
 
 ```
+
 # Building models for sentence classification
 
 We wil start by the most simple one with 24 Denses layers
+
+![png](/images/nlp_project_files/bidirectional.png)
 
 ```
 model_64_dense = tf.keras.Sequential([
@@ -112,6 +131,9 @@ history = model_64_dense.fit(train_padded, training_label_seq, epochs=num_epochs
 
 
 Next, is an LSTM of 32 units
+
+![png](/images/nlp_project_files/lstm.png)
+
 
 ```
 model_32_LSTM = tf.keras.Sequential([
@@ -134,6 +156,10 @@ history2 = model_32_LSTM.fit(train_padded, training_label_seq, epochs=60, valida
 
 
 The last one has Con1D in addition to LSTM:
+
+![png](/images/nlp_project_files/demcq.png)
+
+
 ```
 model_lstm_conv1d = tf.keras.Sequential([
     tf.keras.layers.Embedding(vocab_size, embedding_dim, input_length=max_length),
@@ -154,7 +180,9 @@ history3 = model_lstm_conv1d.fit(train_padded, training_label_seq, epochs=num_ep
 
 ![png](/images/nlp_project_files/nlp_project_16_1.png)
 
+
 # Comparison of performance between the 3 models
+
 
 ```
 plt.plot(history.history['accuracy'])
@@ -201,7 +229,6 @@ y=model_32_LSTM.layers[0]
 weight2=y.get_weights()[0]
 z=model_lstm_conv1d.layers[0]
 weight3=z.get_weights()[0]
-
 ```
 Here, we define a function that decodes a token into a word
 
@@ -210,8 +237,8 @@ reverse_word_index = dict([(value, key) for (key, value) in word_index.items()])
 
 def decode_sentence(text):
     return ' '.join([reverse_word_index.get(i, '?') for i in text])
-
 ```
+
 (Optional): the code below is for the euclidian distance and cosine similarity
 
 ```
@@ -223,8 +250,8 @@ def cos_sim(a,b):
 
 def euc_dist(a,b):
   return np.linalg.norm(a-b)
-
 ```
+
 # Correlation matrix, Eigen Values/Vectors and PCA
 
 
@@ -232,17 +259,21 @@ def euc_dist(a,b):
 ```
 import pandas as pd
 df=pd.DataFrame(weight1)
-```
-
-
-```
 X_corr=df.corr()
+```
+
+![png](/images/nlp_project_files/corr_matrix.png)
+
+
+```
 values,vectors=np.linalg.eig(X_corr)
 eigv_s=(-values).argsort()
 vectors=vectors[:,eigv_s]
 new_vectors=vectors[:,:2]
 new_X=np.dot(weight1,new_vectors)
 ```
+
+Here, we reduced the embedding dimension from 16 to 2 ie: we've chosen the 2 eigen vectors (x1,x2) that have the highest eigen values then we did a dot product between the embedding matrix of shape (1000,16) and the new vector of shape (16,2).
 
 
 ```
@@ -263,5 +294,20 @@ for i in range(vocab):
   plt.annotate(word,xy=(sampled_X[i,0],sampled_X[i,1]))
 ```
 
+Below is the visualisation of the word embedding of the "BBC news" dataset in 2D.
 
 ![png](/images/nlp_project_files/nlp_project_25_0.png)
+
+# Word embedding in 3D using T-SNE
+
+Here is the T-SNE visualisation of the word embedding in 3D. It was done using "Embedding Projector" with 5035 iterations and 25 perplexity.
+
+![png](/images/nlp_project_files/tsne.png)
+
+We can see that the embedding is divided into 6 groups of words. In fact, each one contains words that are specific to each class.
+
+# Conclusion
+
+This project was about classifying text using "BBC news" dataset, comparing between different models performances and visualizing word embedding using PCA and T-SNE.
+
+
